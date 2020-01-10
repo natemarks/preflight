@@ -1,5 +1,8 @@
 verbose: True
 fileonly: "unregistered value"
-environment_variables:
-  - db_port
-  - db_hostname
+insecure_keys:
+  - deployment_id
+secure_keys:
+  - x_api_token
+connections:
+  -

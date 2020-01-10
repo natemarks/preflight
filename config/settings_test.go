@@ -24,23 +24,28 @@ func TestORFromFile(t *testing.T) {
 }
 
 func TestORFromEV(t *testing.T) {
-	var err error
-	// Set some environment variables
-	m := map[string]string{
-		"PF_DB_PORT":     "2345",
-		"PF_DB_HOSTNAME": "pg.domain.com",
+	err := os.Setenv("PF_DB_PORT", "2345")
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to get environment variable: PF_DB_PORT"))
 	}
-	for k, v := range m {
-		err = os.Setenv(k, v)
-		if err != nil {
-			log.Error(fmt.Sprintf("Unable to get environment variable: %s", "PF_DB_PORT"))
-		}
-	}
-	// This get forces the lookup of envirnmnet variables
+
+	// This get forces the lookup of environment variables
 	GetSettings()
 	var ll string
 	ll = viper.GetString("db_port")
 	if ll != "2345" {
+		t.Fail()
+	}
+}
+
+func TestHost_AddCredential(t *testing.T) {
+	h := NewHost("pg.domain.com", "2345")
+	cm := make(map[string]string)
+	for _, f := range ValidCredentialFields {
+		cm[f] = fmt.Sprintf("worst_%s_ever", f)
+	}
+	h.AddCredential(cm)
+	if len(h.credentials) != 1 {
 		t.Fail()
 	}
 
