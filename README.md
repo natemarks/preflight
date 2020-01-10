@@ -12,6 +12,6 @@ Verify tcp connectivity to a list of host/port environment variable paris specif
 
 
 ## Validate credentials and set credential environment variables
-This checks the last  n versions of a secret to try to log into a required resource, like a database.  If successful, it sets the environment variable(s) to the valide credentials and logs the key and sha256 hash of the value.
+This checks the last  n versions of a secret to try to log into a required resource, like a database.  If successful, it sets the environment variable(s) to the valid credentials and logs the key and sha256 hash of the value.
 
 NOTE: this may require a plugin model at some point to handle authentication tests for various kinds or resources.

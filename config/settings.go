@@ -40,7 +40,7 @@ func DefineViperConfigFile() {
 }
 
 func DefineViperEnvVars() {
-	viper.SetEnvPrefix("pf") // will be uppercased automatically
+	viper.SetEnvPrefix("pf") // will be uppercase automatically
 	viper.AutomaticEnv()
 }
 
@@ -61,7 +61,7 @@ func NewHost(address, port string) *Host {
 }
 
 // Filter and validate the credential map
-func (h *Host) AddCredential(cred map[string]string) error {
+func (h *Host) AddCredential(cred map[string]string) {
 	//create new keys for the hashed values of these fields
 	hashedFields := []string{"username", "password", "token"}
 	newCredentialMap := make(map[string]string)
@@ -76,6 +76,4 @@ func (h *Host) AddCredential(cred map[string]string) error {
 		}
 	}
 	h.credentials = append(h.credentials, newCredentialMap)
-
-	return nil
 }
