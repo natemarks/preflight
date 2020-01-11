@@ -1,8 +1,4 @@
 verbose: True
 fileonly: "unregistered value"
-insecure_keys:
-  - deployment_id
-secure_keys:
-  - x_api_token
-connections:
-  -
+checked_environment_variables:
+  - IS_AWS

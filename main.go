@@ -33,5 +33,6 @@ func RealMain() {
 		log.SetLevel(log.TraceLevel)
 		log.Debug("Verbose logging is enabled")
 	}
+	config.CheckVars()
 
 }

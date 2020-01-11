@@ -2,9 +2,10 @@ package config
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
+	"os"
 
-	"github.com/natemarks/preflight/utility"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -12,8 +13,6 @@ import (
 const (
 	DefaultVerbose bool = false
 )
-
-var ValidCredentialFields = []string{"username", "password", "token", "description", "version"}
 
 // Get all of the config settings from file, environment, flag, etc and return a config object
 func GetSettings() {
@@ -48,32 +47,37 @@ func GetHash(s string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
 
-type Host struct {
-	address, port string
-	credentials   []map[string]string
+type Connection struct {
+	id, address, port, username, password, token, description, version string
 }
 
-func NewHost(address, port string) *Host {
-	h := new(Host)
-	h.address = address
-	h.port = port
-	return h
-}
-
-// Filter and validate the credential map
-func (h *Host) AddCredential(cred map[string]string) {
-	//create new keys for the hashed values of these fields
-	hashedFields := []string{"username", "password", "token"}
-	newCredentialMap := make(map[string]string)
-	for k, v := range cred {
-		if !utility.Contains(ValidCredentialFields, k) {
-			log.Warn(fmt.Sprintf("Ignoring invalid credential field: %s", k))
-			continue
+// Return true if the environment variable is set to a non-empty value
+func IsSet(ev string) error {
+	name, ok := os.LookupEnv(ev)
+	if ok {
+		if os.Getenv(ev) == "" {
+			errorMsg := fmt.Sprintf("environment variable set, but empty: %s", name)
+			log.Error(errorMsg)
+			return errors.New(errorMsg)
+		} else {
+			values := []interface{}{ev, GetHash(os.Getenv(name))}
+			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
+			return nil
 		}
-		newCredentialMap[k] = v
-		if utility.Contains(hashedFields, k) {
-			newCredentialMap[fmt.Sprintf("%sHashed", k)] = GetHash(v)
+	} else {
+		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", name)
+		log.Error(errorMsg)
+		return errors.New(errorMsg)
+	}
+}
+
+func CheckVars() {
+	GetSettings()
+	ll := viper.GetStringSlice("checked_environment_variables")
+	for _, vv := range ll {
+		err := IsSet(vv)
+		if err != nil {
+			break
 		}
 	}
-	h.credentials = append(h.credentials, newCredentialMap)
 }
