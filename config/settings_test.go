@@ -97,5 +97,4 @@ func TestIsSetSuccess(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-
 }

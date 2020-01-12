@@ -71,8 +71,8 @@ func IsSet(ev string) error {
 	}
 }
 
-func CheckVars() {
-	ll := viper.GetStringSlice("checked_environment_variables")
+// Check a list of environment variables, stopping onf the first failure
+func CheckVars(ll []string) {
 	for _, vv := range ll {
 		err := IsSet(vv)
 		if err != nil {

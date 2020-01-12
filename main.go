@@ -33,6 +33,6 @@ func RealMain() {
 		log.SetLevel(log.TraceLevel)
 		log.Debug("Verbose logging is enabled")
 	}
-	config.CheckVars()
+	config.CheckVars(viper.GetStringSlice("checked_environment_variables"))
 
 }
