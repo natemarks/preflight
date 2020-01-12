@@ -72,7 +72,6 @@ func IsSet(ev string) error {
 }
 
 func CheckVars() {
-	GetSettings()
 	ll := viper.GetStringSlice("checked_environment_variables")
 	for _, vv := range ll {
 		err := IsSet(vv)
@@ -80,4 +79,5 @@ func CheckVars() {
 			break
 		}
 	}
+	log.Info(fmt.Sprintf("Checked %d environment variables.  Finished", len(ll)))
 }
