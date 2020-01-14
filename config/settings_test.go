@@ -98,3 +98,13 @@ func TestIsSetSuccess(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestConnections(t *testing.T) {
+	_ = os.Setenv("MY_COOL_DB_USERNAME", "VALID_VALUE")
+	ll := []string{"MY_COOL_DB_USERNAME"}
+	got, _ := Connections(ll)
+	if got["MY_COOL_DB"]["USERNAME"] != "VALID_VALUE" {
+		t.Fail()
+	}
+
+}
