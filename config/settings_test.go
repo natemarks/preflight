@@ -108,3 +108,23 @@ func TestConnections(t *testing.T) {
 	}
 
 }
+
+func TestResolveHostNameIP(t *testing.T) {
+	i, err := ResolveHostName("8.8.8.8")
+	if err != nil {
+		t.Fail()
+	}
+	if i != "8.8.8.8" {
+		t.Fail()
+	}
+}
+
+func TestResolveHostNameHost(t *testing.T) {
+	i, err := ResolveHostName("www.google.com")
+	if err != nil {
+		t.Fail()
+	}
+	if len(i) == 0 {
+		t.Fail()
+	}
+}

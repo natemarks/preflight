@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -22,6 +23,7 @@ var ReservedSuffixes = []string{
 	"TOKEN",
 	"DESCRIPTION",
 	"VERSION",
+	"TIMEOUT",
 }
 
 // Get all of the config settings from file, environment, flag, etc and return a config object
@@ -115,4 +117,26 @@ func Connections(ll []string) (map[string]map[string]string, error) {
 		}
 	}
 	return ccs, nil
+}
+
+// given either a cidr or a host name, return the IP  address or error out
+// www.google.com -> 1.2.3.4
+// 1.2.3.4 -> 1.2.3.4
+func ResolveHostName(hn string) (string, error) {
+	//try to parse the string as an IP address
+	i, _, err := net.ParseCIDR(hn)
+	// if it can't be parsed as a cidr, try to  resolve it as a host name
+	if err != nil {
+		log.Debug(fmt.Sprintf("%s is not an IP address. Resolving hostname", hn))
+		lh, err := net.LookupHost(hn)
+		if err != nil {
+			log.Error(fmt.Sprintf("Unable to resolve host: %s", hn))
+		} else {
+			log.Debug(fmt.Sprintf("Resolved %s to %s", hn, lh[0]))
+		}
+		return lh[0], err
+
+	} else {
+		return string(i), nil
+	}
 }

@@ -1,5 +1,6 @@
 # Preflight
-
+TODO:
+ - add log message to indicate task ID an task image name/version
 Check the container environment before starting the service based on the configured requirements. The intent is that the service engineers manage a preflight config file and the devops team uses preflight to make sure all of the requirements are met.
 
 ## Check environment variables
