@@ -120,3 +120,9 @@ func TestResolveHostNameHost(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestCanConnectSucceed(t *testing.T) {
+	if !CanConnect("www.google.com", "80", 3000) {
+		t.Fail()
+	}
+}
