@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/natemarks/preflight/utility"
 	log "github.com/sirupsen/logrus"
@@ -14,16 +15,17 @@ import (
 )
 
 const (
-	DefaultVerbose bool = false
+	DefaultVerbose      bool   = false
+	DefaultOrganization string = "MyCompanyName"
+	DefaultTeam         string = "DevOps"
+	EVWordSeparator     string = "_"
+	ConnTimeoutMS       int64  = 3000 // default connection timeout in milliseconds
 )
 
-var ReservedSuffixes = []string{
-	"USERNAME",
-	"PASSWORD",
-	"TOKEN",
-	"DESCRIPTION",
-	"VERSION",
-	"TIMEOUT",
+//  Supported clients is used to determine environment variables that contain host attributes AND
+// to match a map host attributes to a client access testing function that can handle them
+var SupportedClients = []string{
+	"POSTGRES10",
 }
 
 // Get all of the config settings from file, environment, flag, etc and return a config object
@@ -42,6 +44,8 @@ func GetSettings() {
 
 func DefineViperDefaults() {
 	viper.SetDefault("verbose", DefaultVerbose)
+	viper.SetDefault("organization", DefaultOrganization)
+	viper.SetDefault("team", DefaultTeam)
 }
 
 func DefineViperConfigFile() {
@@ -59,64 +63,182 @@ func GetHash(s string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
 }
 
-type Connection struct {
-	id, address, port, username, password, token, description, version string
-}
+//  BEGIN HERE
 
-// Return true if the environment variable is set to a non-empty value
-func IsSet(ev string) error {
-	name, ok := os.LookupEnv(ev)
-	if ok {
-		if os.Getenv(ev) == "" {
-			errorMsg := fmt.Sprintf("environment variable set, but empty: %s", name)
-			log.Error(errorMsg)
-			return errors.New(errorMsg)
-		} else {
-			values := []interface{}{ev, GetHash(os.Getenv(name))}
-			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
-			return nil
-		}
-	} else {
-		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", name)
-		log.Error(errorMsg)
-		return errors.New(errorMsg)
-	}
-}
+// Verify Environment Variables are set
+// using the smaller set of verified EVs, find the EVs that contain connection data (by matching prefix to reserved clients)
+// Find EVs that contain connection data, group them bu host ID, and merge all the maps for each host id together
+//iterate through the host maps
+// for each host map:
+//  if IsRerachable:
+//     VerifyClientACCESS
 
-// Check a list of environment variables, stopping onf the first failure
-func CheckVars(ll []string) error {
+// MAIN:  Calls CheckVars first and saves the output to varMap
+
+// Return a verified map of environment variables and values
+func CheckVars(ll []string) (map[string]string, error) {
+	res := make(map[string]string)
 	if len(ll) == 0 {
-		return errors.New("no environment variables to check")
+		return res, errors.New("no environment variables to check")
 	}
-	for _, vv := range ll {
-		err := IsSet(vv)
-		if err != nil {
-			break
+	for _, key := range ll {
+		val, err := IsSet(key)
+		if err == nil {
+			res[key] = val
+
+		} else {
+			continue
 		}
 	}
 	log.Info(fmt.Sprintf("Checked %d environment variables.  Finished", len(ll)))
-	return nil
+	return res, nil
 }
 
-// Return a list of Connections from the list of environment variables
-// Based on reserved suffixes (ex. username, password, token, etc)
-// APPLES_DATABASE_USERNAME='apple_user'
-// the connection id would be "APPLES_DATABASE" and the username would be 'apple_user'
-// match without case, but the environment variables should be caps
-func Connections(ll []string) (map[string]map[string]string, error) {
-	var ccs = map[string]map[string]string{}
-	for _, vv := range ll {
-		words := strings.Split(vv, "_")
-		suffix := words[len(words)-1]
-		if !utility.Contains(ReservedSuffixes, strings.ToUpper(suffix)) {
+// Return true if the environment variable is set to a non-empty value
+func IsSet(key string) (string, error) {
+	val, ok := os.LookupEnv(key)
+	if ok {
+		if val == "" {
+			errorMsg := fmt.Sprintf("environment variable set, but empty: %s", val)
+			log.Error(errorMsg)
+			return val, errors.New(errorMsg)
+		} else {
+			values := []interface{}{key, GetHash(os.Getenv(val))}
+			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
+			return val, nil
+		}
+	} else {
+		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", key)
+		log.Error(errorMsg)
+		return "", errors.New(errorMsg)
+	}
+}
+
+// MAIN calls GetHosts(varMap) and saves the returned map to hostMap
+
+// Use preflight naming rules to generate a map of hosts by id
+// Given a valid map of environment variable keys and values (presumably validated by CheckVars), return a map of hosts,
+// by host id.
+// not all environment variables contain host attributes. host data EVs have 3 or more parts and begin with a string
+// that matches a supported client type
+// host attributes are gathered by grouing and perging fdata from a number of environment varaiable example:
+
+// to get this
+// {
+//	"id": "HOT_PICKLES",
+//	"client": "POSTGRES10",
+//	"address": "8.8.8.8",
+//	"port": "5432",
+// }
+
+//  I would use
+// POSTGRES10_HOT_PICKLES_ADDRESS=8.8.8.8
+// POSTGRES10_HOT_PICKLES_PORT=5432
+
+// These start as two maps that are merged into one:
+// {
+//	"id": "HOT_PICKLES",
+//	"client": "POSTGRES10",
+//	"address": "8.8.8.8",
+// }
+// {
+//	"id": "HOT_PICKLES",
+//	"client": "POSTGRES10",
+//	"port": "5432",
+// }
+
+func GetHosts(envVars map[string]string) map[string]map[string]string {
+	res := make(map[string]map[string]string)
+
+	for key, val := range envVars {
+		thisEVMap, err := GetHostFromEV(key, val)
+		if err != nil {
 			continue
 		} else {
-			id := strings.TrimSuffix(vv, "_"+suffix)
-			ccs[id] = make(map[string]string)
-			ccs[id][suffix] = os.Getenv(vv)
+			if val, ok := res[thisEVMap["id"]]; ok {
+				// the id exists. merge the map for this ev into the existing map
+				UpdateMap(val, thisEVMap)
+			} else {
+				// if not create a new key and
+				res[thisEVMap["id"]] = thisEVMap
+			}
 		}
+
 	}
-	return ccs, nil
+	return res
+
+}
+
+// given a properly formatted environment variable key and it's value return a pointer to a host
+// give a key and value: POSTGRES10_HOT_PICKLES_USERNAME=jdoe
+// return a map like:
+// {
+//	"id": "HOT_PICKLES",
+//	"client": "POSTGRES10",
+//	"username": "jdoe",
+// }
+// The first part is always the client. The last part is the field. All the midde parts are the identity
+// If the first part matches a reserved string that represents a client type we can test, the environment variable is assumed to hold
+// host connection information
+func GetHostFromEV(key string, value string) (map[string]string, error) {
+	words := strings.Split(key, EVWordSeparator)
+	res := make(map[string]string)
+	if len(words) < 3 {
+		return res, errors.New("too few fields in key to be a host setting")
+	}
+
+	// strip the first slice entry out for the client and keep the remaining list in theRest
+	client, theRest := words[0], words[1:]
+
+	// The environment variable doessn't contain host data if the prefix isnt a supported client type
+	if !utility.Contains(SupportedClients, client) {
+		return res, errors.New(fmt.Sprintf("%s is not a Supported Client type", client))
+
+	}
+
+	//strip the last entry as the field name and keep the middle entries together
+	fieldName, theMiddle := theRest[len(theRest)-1], theRest[:len(theRest)-1]
+
+	//Join the middle values together into an id that can contain separators
+	id := strings.Join(theMiddle, EVWordSeparator)
+	res["id"] = id
+	res["client"] = client
+	res[fieldName] = value
+	return res, nil
+}
+
+//write newMap keys and values into myMap
+// Note: a map is always a reference so I don't have to return
+func UpdateMap(myMap map[string]string, addMap map[string]string) {
+	for k, v := range addMap {
+		myMap[k] = v
+	}
+}
+
+// MAIN calls reachableHosts := GetReachableHosts(hostMap)
+
+func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[string]string, bool) {
+	var success = true
+	var err error = nil
+
+	res := make(map[string]map[string]string)
+
+	for _, hMap := range hosts {
+		hMap["address"], err = ResolveHostName(hMap["address"])
+		if err != nil {
+			success = false
+			continue
+		} else {
+			ok := CanConnect(hMap["addresss"], hMap["port"], ConnTimeoutMS)
+			if ok {
+				res[hMap["id"]] = hMap
+			} else {
+				success = false
+			}
+		}
+
+	}
+	return res, success
 }
 
 // given either a cidr or a host name, return the IP  address or error out
@@ -139,4 +261,28 @@ func ResolveHostName(hn string) (string, error) {
 	} else {
 		return string(i), nil
 	}
+}
+
+func CanConnect(host, port string, timeout int64) bool {
+	target := host + ":" + port
+	var success = true
+	conn, err := net.DialTimeout("tcp", target, time.Duration(timeout)*time.Millisecond)
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to connect to  %s", target))
+		success = false
+	} else {
+		log.Debug(fmt.Sprintf("Successfully connected to   %s", target))
+		defer func() {
+			err := conn.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
+
+	}
+	return success
+}
+
+func LogContainerMetadata() {
+	///if it's AWS log the image name/version/whatever else we want from the localhost metadata json curl
 }

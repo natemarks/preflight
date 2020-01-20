@@ -52,7 +52,7 @@ func TestIsSetUnset(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Unsetenv("NONEXISTENT_VAR")
-	err := IsSet("NONEXISTENT_VAR")
+	_, err := IsSet("NONEXISTENT_VAR")
 
 	// should log the non-existent variable message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable key does not exist:") {
@@ -69,7 +69,7 @@ func TestIsSetEmpty(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Setenv("EMPTY_VAR", "")
-	err := IsSet("EMPTY_VAR")
+	_, err := IsSet("EMPTY_VAR")
 
 	// should log the empty variable message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable set, but empty:") {
@@ -87,7 +87,7 @@ func TestIsSetSuccess(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Setenv("VALID_VAR", "VALID_VALUE")
-	err := IsSet("VALID_VAR")
+	_, err := IsSet("VALID_VAR")
 
 	// should log the success message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable found:") {
@@ -99,16 +99,7 @@ func TestIsSetSuccess(t *testing.T) {
 	}
 }
 
-func TestConnections(t *testing.T) {
-	_ = os.Setenv("MY_COOL_DB_USERNAME", "VALID_VALUE")
-	ll := []string{"MY_COOL_DB_USERNAME"}
-	got, _ := Connections(ll)
-	if got["MY_COOL_DB"]["USERNAME"] != "VALID_VALUE" {
-		t.Fail()
-	}
-
-}
-
+// Given an IP address, return the IP address without errors
 func TestResolveHostNameIP(t *testing.T) {
 	i, err := ResolveHostName("8.8.8.8")
 	if err != nil {
@@ -119,6 +110,7 @@ func TestResolveHostNameIP(t *testing.T) {
 	}
 }
 
+// Given a valid host name, resolve and return the IP
 func TestResolveHostNameHost(t *testing.T) {
 	i, err := ResolveHostName("www.google.com")
 	if err != nil {

@@ -1,4 +1,6 @@
 verbose: True
+organization: "MyCompanyName"
+team: "DevOps"
 fileonly: "unregistered value"
 checked_environment_variables:
   - IS_AWS
