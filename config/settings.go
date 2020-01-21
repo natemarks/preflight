@@ -14,6 +14,27 @@ import (
 	"github.com/spf13/viper"
 )
 
+//  Host Data Filter Pipeline
+// Many of the functions that check hosts take a nested map of host data organized by host id . in yaml it would look
+// like:
+
+//"IDENTITIES":
+//	"ADDRESS": "iddy.domain.com"
+//	"PORT": "5432"
+//	"ID": "IDENTITIES"
+//	"USERNAME": "jdoe"
+//"HISTORY":
+//	"ADDRESS": "hizzy.domain.com"
+//	"PORT": "5432"
+//	"ID": "HISTORY"
+//	"USERNAME": "jdoe"
+
+// Such functions iterate through the hosts, and return the map with the failing host checks filtered out AND a
+// boolean 'ok' value that's only true if all the host checks passed.  In cases where subsequent tests are cheap, we
+// use the unfiltered list to expose as many problems as possible as early as possible.  In cases where the there's no
+// hope of the check passing and/or the test that's expected to fail will be resource expensive, we'd us the filtered
+// list.
+
 const (
 	DefaultVerbose      bool   = false
 	DefaultOrganization string = "MyCompanyName"
@@ -215,21 +236,21 @@ func UpdateMap(myMap map[string]string, addMap map[string]string) {
 	}
 }
 
-// MAIN calls reachableHosts := GetReachableHosts(hostMap)
-
+// Return map with failed checked filtered out and a boolean that's only true if everything succeeded
+// See Host Data Filter Pipeline at the top for more information
 func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[string]string, bool) {
 	var success = true
-	var err error = nil
 
 	res := make(map[string]map[string]string)
 
 	for _, hMap := range hosts {
-		hMap["address"], err = ResolveHostName(hMap["address"])
-		if err != nil {
+		var ok bool
+		hMap["address"], ok = ResolveHostName(hMap["address"])
+		if !ok {
 			success = false
 			continue
 		} else {
-			ok := CanConnect(hMap["addresss"], hMap["port"], ConnTimeoutMS)
+			ok := CanConnect(hMap["address"], hMap["port"], ConnTimeoutMS)
 			if ok {
 				res[hMap["id"]] = hMap
 			} else {
@@ -244,7 +265,8 @@ func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[strin
 // given either a cidr or a host name, return the IP  address or error out
 // www.google.com -> 1.2.3.4
 // 1.2.3.4 -> 1.2.3.4
-func ResolveHostName(hn string) (string, error) {
+func ResolveHostName(hn string) (string, bool) {
+	var success bool = true
 	//try to parse the string as an IP address
 	i, _, err := net.ParseCIDR(hn)
 	// if it can't be parsed as a cidr, try to  resolve it as a host name
@@ -253,18 +275,19 @@ func ResolveHostName(hn string) (string, error) {
 		lh, err := net.LookupHost(hn)
 		if err != nil {
 			log.Error(fmt.Sprintf("Unable to resolve host: %s", hn))
+			success = false
+			return "", success
 		} else {
 			log.Debug(fmt.Sprintf("Resolved %s to %s", hn, lh[0]))
+			return lh[0], success
 		}
-		return lh[0], err
-
 	} else {
-		return string(i), nil
+		return string(i), success
 	}
 }
 
-func CanConnect(host, port string, timeout int64) bool {
-	target := host + ":" + port
+func CanConnect(address, port string, timeout int64) bool {
+	target := address + ":" + port
 	var success = true
 	conn, err := net.DialTimeout("tcp", target, time.Duration(timeout)*time.Millisecond)
 	if err != nil {

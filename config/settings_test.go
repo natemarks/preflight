@@ -101,8 +101,8 @@ func TestIsSetSuccess(t *testing.T) {
 
 // Given an IP address, return the IP address without errors
 func TestResolveHostNameIP(t *testing.T) {
-	i, err := ResolveHostName("8.8.8.8")
-	if err != nil {
+	i, ok := ResolveHostName("8.8.8.8")
+	if !ok {
 		t.Fail()
 	}
 	if i != "8.8.8.8" {
@@ -112,8 +112,8 @@ func TestResolveHostNameIP(t *testing.T) {
 
 // Given a valid host name, resolve and return the IP
 func TestResolveHostNameHost(t *testing.T) {
-	i, err := ResolveHostName("www.google.com")
-	if err != nil {
+	i, ok := ResolveHostName("www.google.com")
+	if !ok {
 		t.Fail()
 	}
 	if len(i) == 0 {
@@ -125,4 +125,36 @@ func TestCanConnectSucceed(t *testing.T) {
 	if !CanConnect("www.google.com", "80", 3000) {
 		t.Fail()
 	}
+}
+
+// Throw a mix of good and bad host maps into GetReachableHosts
+// Only one host is good so the length of res should be 1
+// because some entries failed, ok should be false
+func TestGetReachableHosts(t *testing.T) {
+	var testMap = map[string]map[string]string{}
+
+	testMap["google"] = map[string]string{}
+	testMap["unresolveable"] = map[string]string{}
+	testMap["badport"] = map[string]string{}
+
+	testMap["google"]["id"] = "google"
+	testMap["google"]["address"] = "www.google.com"
+	testMap["google"]["port"] = "80"
+
+	testMap["unresolveable"]["id"] = "unresolveable"
+	testMap["unresolveable"]["address"] = "unreasolvable.name.garbagetld"
+	testMap["unresolveable"]["port"] = "80"
+
+	testMap["badport"]["id"] = "badport"
+	testMap["badport"]["address"] = "www.google.com"
+	testMap["badport"]["port"] = "40444"
+
+	res, ok := GetReachableHosts(testMap)
+	if len(res) != 1 {
+		t.Fail()
+	}
+	if ok {
+		t.Fail()
+	}
+
 }
