@@ -108,6 +108,8 @@ VEGGIES_POSTGRES_PASSWORD=
 
 ## TODO
 prereq cleanup runbook so we can get teh mokc preflight environment into devopsiac
+prereq: create mock-service project
+
  
 1) create mock docker container with mock service
  - simple web app
