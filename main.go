@@ -44,8 +44,8 @@ func RealMain() {
 		msg := "Unable to get a list of environment variables to check. set 'checked_environment_variables' in the config"
 		log.Error(msg)
 	}
-	varMap, err := config.CheckVars(EnvVarsToCheck)
-	if err != nil {
+	varMap, ok := config.CheckVars(EnvVarsToCheck)
+	if !ok {
 		success = false
 		log.Error("Some required environment variables were not set")
 	}
@@ -54,7 +54,7 @@ func RealMain() {
 
 	// temporarily drop the reachableHosts variable to run tests
 	// reachableHosts, err := config.GetReachableHosts(hostMap)
-	_, ok := config.GetReachableHosts(hostMap)
+	_, ok = config.GetReachableHosts(hostMap)
 	if !ok {
 		success = false
 		log.Error("Some hosts are not reachable")

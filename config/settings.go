@@ -97,10 +97,12 @@ func GetHash(s string) string {
 // MAIN:  Calls CheckVars first and saves the output to varMap
 
 // Return a verified map of environment variables and values
-func CheckVars(ll []string) (map[string]string, error) {
+func CheckVars(ll []string) (map[string]string, bool) {
+	success := true
 	res := make(map[string]string)
 	if len(ll) == 0 {
-		return res, errors.New("no environment variables to check")
+		log.Error("no environment variables to check")
+		success = false
 	}
 	for _, key := range ll {
 		val, ok := IsSet(key)
@@ -108,31 +110,33 @@ func CheckVars(ll []string) (map[string]string, error) {
 			res[key] = val
 
 		} else {
+			success = false
 			continue
 		}
 	}
 	log.Info(fmt.Sprintf("Checked %d environment variables.  Finished", len(ll)))
-	return res, nil
+	return res, success
 }
 
 // Return true if the environment variable is set to a non-empty value
 func IsSet(key string) (string, bool) {
+	success := true
 	val, ok := os.LookupEnv(key)
 	if ok {
 		if val == "" {
 			errorMsg := fmt.Sprintf("environment variable set, but empty: %s", val)
 			log.Error(errorMsg)
-			return val, false
+			success = false
 		} else {
 			values := []interface{}{key, GetHash(os.Getenv(val))}
 			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
-			return val, true
 		}
 	} else {
 		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", key)
 		log.Error(errorMsg)
-		return "", false
+		success = false
 	}
+	return val, success
 }
 
 // MAIN calls GetHosts(varMap) and saves the returned map to hostMap

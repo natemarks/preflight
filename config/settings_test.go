@@ -99,6 +99,22 @@ func TestIsSetSuccess(t *testing.T) {
 	}
 }
 
+func TestCheckVarsEmpty(t *testing.T) {
+	hook := test.NewGlobal()
+	v := []string{}
+	vMap, ok := CheckVars(v)
+	if ok {
+		t.Fail()
+	}
+	if len(vMap) != 0 {
+		t.Fail()
+	}
+	if !strings.Contains(hook.Entries[0].Message, "no environment variables to check") {
+		t.Fail()
+	}
+
+}
+
 // Given an IP address, return the IP address without errors
 func TestResolveHostNameIP(t *testing.T) {
 	i, ok := ResolveHostName("8.8.8.8")
