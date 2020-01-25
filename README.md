@@ -1,21 +1,21 @@
 # Preflight
 
-preflight is run inside a docker container.  The container starts by running an entrypoint.sh script that looks like the one below. The preflight utility will run through every check and log the results to stdout which should get be readily available to any docker logger.  If any of the checks failed, it exits with a non-zero exit code.  The entrypoint.sh script must run with 'set -e' in order to be sure it exits if preflight throws an error *BEFORE* starting the service. This should achieve the following goals:
+preflight is run inside a docker container.  The container starts by running an entrypoint.sh script that looks like the one below. The preflight utility will run through every check and log the results to stdout which should be readily available to any docker logger.  If any of the checks failed, it exits with a non-zero exit code.  The entrypoint.sh script must run with 'set -e' in order to be sure it exits if preflight throws an error *BEFORE* starting the service. This should achieve the following goals:
  
- - Log a thorough list of all the the missing/failing configuration settings adn tag the logs for the audience that needs to resolve them ex: \[MyOrgName:DevOps\] 
- - Fail fast!  Don't bother wasting time trying to start a service when we know the configuration is borked
- - Reduce Noise: No useful logs conf from a service that tries to start with a known-bad config
+ - Log a complete list of all the the missing/failing environment variables and tag the logs for the audience that needs to resolve them ex: \[MyOrgName:DevOps\] 
+ - Fail fast!  Don't waste time trying to start a service when we know the configuration is invalid
+ - Reduce Noise: No useful logs come from a service that tries to start with an invalid config
  - Surface lifecycle information: Log information about the image and the attempted start time. This makes it easier to parse the logs to figure out when a service is flagging or stable. It can be clunky to parse the AWS task event logs to get this information from 'outside' of the container, for example
  - the preflight config file can be a contract/manifest between dev devops: ideally, the service engineering team is running preflight in their development containers from the beginning.  That probably helps dev, since they are their own devops in their local environments.  Then moving to shared deployments that are managed by dev, the preflight config is a part of the image, streamling the process for dev to provide all the right config for a new service
 
 
-example preflight cnofig:
+example preflight config:
 ```yaml
 verbose: True
 organization: "MyCompanyName"
 team: "DevOps"
 checked_environment_variables:
-  - IS_AWS
+  - SOME_SERVICE_CONFIG_KEY
 
 ```
 
@@ -113,3 +113,4 @@ VEGGIES_POSTGRES_PASSWORD=
 - add log message to indicate task ID an task image name/version, image connectivity data (ip, etc)
 - all the check functions are similar. maybe use an interface to make it easier to extend
 - group related connection env vars by client type / connection identifier / connection field  ex: POSTGRES92_JUNKBIN_USERNAME.  there can be many separators in the middle. the first and last have to be  from a reserved set.
+- make client tcp and credentiall checks concurrent
