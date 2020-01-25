@@ -103,8 +103,8 @@ func CheckVars(ll []string) (map[string]string, error) {
 		return res, errors.New("no environment variables to check")
 	}
 	for _, key := range ll {
-		val, err := IsSet(key)
-		if err == nil {
+		val, ok := IsSet(key)
+		if ok {
 			res[key] = val
 
 		} else {
@@ -116,22 +116,22 @@ func CheckVars(ll []string) (map[string]string, error) {
 }
 
 // Return true if the environment variable is set to a non-empty value
-func IsSet(key string) (string, error) {
+func IsSet(key string) (string, bool) {
 	val, ok := os.LookupEnv(key)
 	if ok {
 		if val == "" {
 			errorMsg := fmt.Sprintf("environment variable set, but empty: %s", val)
 			log.Error(errorMsg)
-			return val, errors.New(errorMsg)
+			return val, false
 		} else {
 			values := []interface{}{key, GetHash(os.Getenv(val))}
 			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
-			return val, nil
+			return val, true
 		}
 	} else {
 		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", key)
 		log.Error(errorMsg)
-		return "", errors.New(errorMsg)
+		return "", false
 	}
 }
 

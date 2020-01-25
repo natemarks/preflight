@@ -52,14 +52,14 @@ func TestIsSetUnset(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Unsetenv("NONEXISTENT_VAR")
-	_, err := IsSet("NONEXISTENT_VAR")
+	_, ok := IsSet("NONEXISTENT_VAR")
 
 	// should log the non-existent variable message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable key does not exist:") {
 		t.Fail()
 	}
 	// should return an error
-	if err == nil {
+	if ok {
 		t.Fail()
 	}
 }
@@ -69,14 +69,14 @@ func TestIsSetEmpty(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Setenv("EMPTY_VAR", "")
-	_, err := IsSet("EMPTY_VAR")
+	_, ok := IsSet("EMPTY_VAR")
 
 	// should log the empty variable message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable set, but empty:") {
 		t.Fail()
 	}
 	// should return an error
-	if err == nil {
+	if ok {
 		t.Fail()
 	}
 
@@ -87,14 +87,14 @@ func TestIsSetSuccess(t *testing.T) {
 	hook := test.NewGlobal()
 
 	_ = os.Setenv("VALID_VAR", "VALID_VALUE")
-	_, err := IsSet("VALID_VAR")
+	_, ok := IsSet("VALID_VAR")
 
 	// should log the success message
 	if !strings.Contains(hook.LastEntry().Message, "environment variable found:") {
 		t.Fail()
 	}
 	// should return nil error
-	if err != nil {
+	if !ok {
 		t.Fail()
 	}
 }
