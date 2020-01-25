@@ -236,7 +236,7 @@ func GetHostFromEV(key string, value string) (map[string]string, bool) {
 	return res, success
 }
 
-//write newMap keys and values into myMap
+// write newMap keys and values into myMap
 // Note: a map is always a reference so I don't have to return
 func UpdateMap(myMap map[string]string, addMap map[string]string) {
 	for k, v := range addMap {
@@ -247,7 +247,7 @@ func UpdateMap(myMap map[string]string, addMap map[string]string) {
 // Return map with failed checked filtered out and a boolean that's only true if everything succeeded
 // See Host Data Filter Pipeline at the top for more information
 func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[string]string, bool) {
-	var success = true
+	success := true
 
 	res := make(map[string]map[string]string)
 
@@ -274,7 +274,7 @@ func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[strin
 // www.google.com -> 1.2.3.4
 // 1.2.3.4 -> 1.2.3.4
 func ResolveHostName(hn string) (string, bool) {
-	var success = true
+	success := true
 	//try to parse the string as an IP address
 	i, _, err := net.ParseCIDR(hn)
 	// if it can't be parsed as a cidr, try to  resolve it as a host name
