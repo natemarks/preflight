@@ -107,6 +107,22 @@ VEGGIES_POSTGRES_PASSWORD=
 ```
 
 ## TODO
+prereq cleanup runbook so we can get teh mokc preflight environment into devopsiac
+ 
+1) create mock docker container with mock service
+ - simple web app
+ - verbose logging so we can tell when it's run
+ - import version pinned preflight
+ 
+ 
+2) database client example :
+- run client on hardcoded db
+- run wiht params from ide env
+- run with params from setup terraform
+- teardown terraform
+ 
+3) concurrency
+
 - add org and team to al log messages
 - add connection checks
 - add a sample client credential test
