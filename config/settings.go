@@ -2,7 +2,6 @@ package config
 
 import (
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -176,8 +175,8 @@ func GetHosts(envVars map[string]string) map[string]map[string]string {
 	res := make(map[string]map[string]string)
 
 	for key, val := range envVars {
-		thisEVMap, err := GetHostFromEV(key, val)
-		if err != nil {
+		thisEVMap, ok := GetHostFromEV(key, val)
+		if !ok {
 			continue
 		} else {
 			if val, ok := res[thisEVMap["id"]]; ok {
@@ -205,20 +204,25 @@ func GetHosts(envVars map[string]string) map[string]map[string]string {
 // The first part is always the client. The last part is the field. All the midde parts are the identity
 // If the first part matches a reserved string that represents a client type we can test, the environment variable is assumed to hold
 // host connection information
-func GetHostFromEV(key string, value string) (map[string]string, error) {
+func GetHostFromEV(key string, value string) (map[string]string, bool) {
+	success := true
 	words := strings.Split(key, EVWordSeparator)
 	res := make(map[string]string)
 	if len(words) < 3 {
-		return res, errors.New("too few fields in key to be a host setting")
+		errMsg := fmt.Sprintf("too few fields in key to be a host setting: %s", key)
+		success = false
+		log.Error(errMsg)
+		return res, success
 	}
 
 	// strip the first slice entry out for the client and keep the remaining list in theRest
 	client, theRest := words[0], words[1:]
 
-	// The environment variable doessn't contain host data if the prefix isnt a supported client type
 	if !utility.Contains(SupportedClients, client) {
-		return res, errors.New(fmt.Sprintf("%s is not a Supported Client type", client))
-
+		errMsg := fmt.Sprintf("prefix doesn't match a supported client: %s", client)
+		success = false
+		log.Error(errMsg)
+		return res, success
 	}
 
 	//strip the last entry as the field name and keep the middle entries together
@@ -229,7 +233,7 @@ func GetHostFromEV(key string, value string) (map[string]string, error) {
 	res["id"] = id
 	res["client"] = client
 	res[fieldName] = value
-	return res, nil
+	return res, success
 }
 
 //write newMap keys and values into myMap
@@ -270,7 +274,7 @@ func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[strin
 // www.google.com -> 1.2.3.4
 // 1.2.3.4 -> 1.2.3.4
 func ResolveHostName(hn string) (string, bool) {
-	var success bool = true
+	var success = true
 	//try to parse the string as an IP address
 	i, _, err := net.ParseCIDR(hn)
 	// if it can't be parsed as a cidr, try to  resolve it as a host name
