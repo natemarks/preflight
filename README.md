@@ -112,6 +112,8 @@ prereq: create mock-service project
 
  
 1) create mock docker container with mock service
+ - https://aws.amazon.com/amazon-linux-2/
+ - make this configurable so we can cange the service name and it's output from a config file
  - simple web app
  - verbose logging so we can tell when it's run
  - import version pinned preflight
@@ -132,3 +134,8 @@ prereq: create mock-service project
 - all the check functions are similar. maybe use an interface to make it easier to extend
 - group related connection env vars by client type / connection identifier / connection field  ex: POSTGRES92_JUNKBIN_USERNAME.  there can be many separators in the middle. the first and last have to be  from a reserved set.
 - make client tcp and credentiall checks concurrent
+
+
+
+## Maintenance
+verion bumps are handled with  https://pypi.org/project/bump2version/0.5.8/
