@@ -45,6 +45,11 @@ func TestGetHash(t *testing.T) {
 	if got != "d0d51358d9a060c093d77a9ab57469fc272a100a341dacf2332d798522ccf32e" {
 		t.Fail()
 	}
+
+	got = GetHash("garbage")
+	if got != "795b6904e54f82411df4b0e27a373a55eea3f9d66dac5a9bce1dd92f7b401da5" {
+		t.Fail()
+	}
 }
 
 // Verify returned error and log message
@@ -110,6 +115,78 @@ func TestCheckVarsEmpty(t *testing.T) {
 		t.Fail()
 	}
 	if !strings.Contains(hook.Entries[0].Message, "no environment variables to check") {
+		t.Fail()
+	}
+
+}
+
+func TestCheckVarsValid(t *testing.T) {
+	hook := test.NewGlobal()
+
+	_ = os.Setenv("DEPLOYMENT_COLOR", "RED")
+	// confusing entry that might kinda look like ust because of the USERNAME suffix
+	// but doesn't begin with a client type
+	_ = os.Setenv("SOME_NON_HOST_BUNCH_OF_STUFF_USERNAME", "garbage")
+	// set some host stuff for the MY_EXPIRED_IDENTITES db
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_USERNAME", "jdoe")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_PASSWORD", "bad_password")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_ADDRESS", "db.domain.invalid_tld")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_PORT", "5432")
+
+	v := []string{
+		"DEPLOYMENT_COLOR",
+		"SOME_NON_HOST_BUNCH_OF_STUFF_USERNAME",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_USERNAME",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_PASSWORD",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_ADDRESS",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_PORT",
+	}
+
+	vMap, ok := CheckVars(v)
+	if !ok {
+		t.Fail()
+	}
+	if len(vMap) != 6 {
+		t.Fail()
+	}
+
+	if hook.Entries[0].Message !=
+		"environment variable found: DEPLOYMENT_COLOR = "+
+			"65cbe1e19791d49b023800b3e22714e2589b6339bef5e660b628dd1023506ebd (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[1].Message !=
+		"environment variable found: SOME_NON_HOST_BUNCH_OF_STUFF_USERNAME = "+
+			"795b6904e54f82411df4b0e27a373a55eea3f9d66dac5a9bce1dd92f7b401da5 (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[2].Message !=
+		"environment variable found: POSTGRES10_MY_EXPIRED_IDENTITIES_USERNAME = "+
+			"d30a5f57532a603697ccbb51558fa02ccadd74a0c499fcf9d45b33863ee1582f (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[3].Message !=
+		"environment variable found: POSTGRES10_MY_EXPIRED_IDENTITIES_PASSWORD = "+
+			"4323203b4ca7f7d3a7fc29d6f36a5b225e1293b718425fae911e7f078acbbf41 (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[4].Message !=
+		"environment variable found: POSTGRES10_MY_EXPIRED_IDENTITIES_ADDRESS = "+
+			"3805b0bdbb9a90df54b68ca4897791462a2a1f069f78a3d297ce7092fcf8b49b (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[5].Message !=
+		"environment variable found: POSTGRES10_MY_EXPIRED_IDENTITIES_PORT = "+
+			"4aeb7ad6d5d37a041c4c5ce6562bf9e3caf05a42d931cef4d9e2a60ca623194d (sha256)" {
+		t.Fail()
+	}
+
+	if hook.Entries[6].Message != "Checked 6 environment variables.  Finished" {
 		t.Fail()
 	}
 

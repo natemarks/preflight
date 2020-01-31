@@ -127,8 +127,8 @@ func IsSet(key string) (string, bool) {
 			log.Error(errorMsg)
 			success = false
 		} else {
-			values := []interface{}{key, GetHash(os.Getenv(val))}
-			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", values...))
+			hash := GetHash(val)
+			log.Info(fmt.Sprintf("environment variable found: %s = %s (sha256)", key, hash))
 		}
 	} else {
 		errorMsg := fmt.Sprintf("environment variable key does not exist: %s", key)
