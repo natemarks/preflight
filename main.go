@@ -38,18 +38,22 @@ func RealMain() {
 
 	config.LogContainerMetadata()
 
+	// get the list of environment variables the service nees so we can check them
 	EnvVarsToCheck := viper.GetStringSlice("checked_environment_variables")
 	if len(EnvVarsToCheck) == 0 {
 		success = false
 		msg := "Unable to get a list of environment variables to check. set 'checked_environment_variables' in the config"
 		log.Error(msg)
 	}
+
+	// make sure each of the required env vars has some set value
 	varMap, ok := config.CheckVars(EnvVarsToCheck)
 	if !ok {
 		success = false
 		log.Error("Some required environment variables were not set")
 	}
 
+	// some  env vars might have data relevant to host checks.  capture that data into a map of host maps by ID
 	hostMap := config.GetHosts(varMap)
 
 	// temporarily drop the reachableHosts variable to run tests
@@ -64,7 +68,7 @@ func RealMain() {
 	if success {
 		os.Exit(0)
 	} else {
-		os.Exit(2)
+		os.Exit(1)
 	}
 
 }

@@ -83,29 +83,6 @@ sslcertpath: /path/to/cert
 Verify tcp connectivity to a list of host/port environment variable paris specified in the configuration.  Commonly the service engineers specify the environment variables they want to use for host and port information.  DevOps injects deployment-specific values  for portability.
 
 
-## Validate credentials and set credential environment variables
-This checks the last  n versions of a secret to try to log into a required resource, like a database.  If successful, it sets the environment variable(s) to the valid credentials and logs the key and sha256 hash of the value.
-
-NOTE: this may require a plugin model at some point to handle authentication tests for various kinds or resources.
-
-
-## Limitationss
-An execution of preflight can only look at a single connection of each type and it has to explicitly match a client type. example
-
-This would invloke the postgres client check if the other prio checks passed. but the service can't have a second postgres client
-```text
-POSTGRES_USERNAME=
-POSTGRES_PASSWORD=
-```
-
-if you had this, there would have to explicitly be a client for each type of postgres db even though the checks  for credentials are the same.  This leave open the problem of client versions, too. this is a opportunity for improvement
-```text
-FRUITS_POSTGRES_USERNAME=
-FRUITS_POSTGRES_PASSWORD=
-VEGGIES_POSTGRES_USERNAME=
-VEGGIES_POSTGRES_PASSWORD=
-```
-
 ## TODO
 prereq cleanup runbook so we can get teh mokc preflight environment into devopsiac
 prereq: create mock-service project
