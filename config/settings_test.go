@@ -251,3 +251,9 @@ func TestGetReachableHosts(t *testing.T) {
 	}
 
 }
+
+// need something for this. maybe reuse the data from the CheckVars test
+// write ths test to make suse I can remove the limitation from the readme
+func TestGetHosts(t *testing.T) {
+
+}
