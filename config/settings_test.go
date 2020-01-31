@@ -230,17 +230,17 @@ func TestGetReachableHosts(t *testing.T) {
 	testMap["unresolveable"] = map[string]string{}
 	testMap["badport"] = map[string]string{}
 
-	testMap["google"]["id"] = "google"
-	testMap["google"]["address"] = "www.google.com"
-	testMap["google"]["port"] = "80"
+	testMap["google"]["ID"] = "google"
+	testMap["google"]["ADDRESS"] = "www.google.com"
+	testMap["google"]["PORT"] = "80"
 
-	testMap["unresolveable"]["id"] = "unresolveable"
-	testMap["unresolveable"]["address"] = "unreasolvable.name.garbagetld"
-	testMap["unresolveable"]["port"] = "80"
+	testMap["unresolveable"]["ID"] = "unresolveable"
+	testMap["unresolveable"]["ADDRESS"] = "unreasolvable.name.garbagetld"
+	testMap["unresolveable"]["PORT"] = "80"
 
-	testMap["badport"]["id"] = "badport"
-	testMap["badport"]["address"] = "www.google.com"
-	testMap["badport"]["port"] = "40444"
+	testMap["badport"]["ID"] = "badport"
+	testMap["badport"]["ADDRESS"] = "www.google.com"
+	testMap["badport"]["PORT"] = "40444"
 
 	res, ok := GetReachableHosts(testMap)
 	if len(res) != 1 {
@@ -255,8 +255,6 @@ func TestGetReachableHosts(t *testing.T) {
 // need something for this. maybe reuse the data from the CheckVars test
 // write ths test to make suse I can remove the limitation from the readme
 func TestGetHosts(t *testing.T) {
-
-	// hook := test.NewGlobal()
 
 	_ = os.Setenv("DEPLOYMENT_COLOR", "RED")
 	// confusing entry that might kinda look like ust because of the USERNAME suffix
@@ -281,6 +279,21 @@ func TestGetHosts(t *testing.T) {
 	hostMap := GetHosts(vMap)
 
 	if hostMap["MY_EXPIRED_IDENTITIES"]["ID"] != "MY_EXPIRED_IDENTITIES" {
+		t.Fail()
+	}
+	if hostMap["MY_EXPIRED_IDENTITIES"]["CLIENT"] != "POSTGRES10" {
+		t.Fail()
+	}
+	if hostMap["MY_EXPIRED_IDENTITIES"]["PORT"] != "5432" {
+		t.Fail()
+	}
+	if hostMap["MY_EXPIRED_IDENTITIES"]["USERNAME"] != "jdoe" {
+		t.Fail()
+	}
+	if hostMap["MY_EXPIRED_IDENTITIES"]["PASSWORD"] != "bad_password" {
+		t.Fail()
+	}
+	if hostMap["MY_EXPIRED_IDENTITIES"]["ADDRESS"] != "db.domain.invalid_tld" {
 		t.Fail()
 	}
 
