@@ -256,4 +256,32 @@ func TestGetReachableHosts(t *testing.T) {
 // write ths test to make suse I can remove the limitation from the readme
 func TestGetHosts(t *testing.T) {
 
+	// hook := test.NewGlobal()
+
+	_ = os.Setenv("DEPLOYMENT_COLOR", "RED")
+	// confusing entry that might kinda look like ust because of the USERNAME suffix
+	// but doesn't begin with a client type
+	_ = os.Setenv("SOME_NON_HOST_BUNCH_OF_STUFF_USERNAME", "garbage")
+	// set some host stuff for the MY_EXPIRED_IDENTITES db
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_USERNAME", "jdoe")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_PASSWORD", "bad_password")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_ADDRESS", "db.domain.invalid_tld")
+	_ = os.Setenv("POSTGRES10_MY_EXPIRED_IDENTITIES_PORT", "5432")
+
+	v := []string{
+		"DEPLOYMENT_COLOR",
+		"SOME_NON_HOST_BUNCH_OF_STUFF_USERNAME",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_USERNAME",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_PASSWORD",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_ADDRESS",
+		"POSTGRES10_MY_EXPIRED_IDENTITIES_PORT",
+	}
+
+	vMap, _ := CheckVars(v)
+	hostMap := GetHosts(vMap)
+
+	if hostMap["MY_EXPIRED_IDENTITIES"]["ID"] != "MY_EXPIRED_IDENTITIES" {
+		t.Fail()
+	}
+
 }

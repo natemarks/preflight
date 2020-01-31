@@ -149,10 +149,10 @@ func IsSet(key string) (string, bool) {
 
 // to get this
 // {
-//	"id": "HOT_PICKLES",
-//	"client": "POSTGRES10",
-//	"address": "8.8.8.8",
-//	"port": "5432",
+//	"ID": "HOT_PICKLES",
+//	"CLIENT": "POSTGRES10",
+//	"ADDRESS": "8.8.8.8",
+//	"PORT": "5432",
 // }
 
 //  I would use
@@ -161,14 +161,14 @@ func IsSet(key string) (string, bool) {
 
 // These start as two maps that are merged into one:
 // {
-//	"id": "HOT_PICKLES",
-//	"client": "POSTGRES10",
-//	"address": "8.8.8.8",
+//	"ID": "HOT_PICKLES",
+//	"CLIENT": "POSTGRES10",
+//	"ADDRESS": "8.8.8.8",
 // }
 // {
-//	"id": "HOT_PICKLES",
-//	"client": "POSTGRES10",
-//	"port": "5432",
+//	"ID": "HOT_PICKLES",
+//	"CLIENT": "POSTGRES10",
+//	"PORT": "5432",
 // }
 
 func GetHosts(envVars map[string]string) map[string]map[string]string {
@@ -179,12 +179,12 @@ func GetHosts(envVars map[string]string) map[string]map[string]string {
 		if !ok {
 			continue
 		} else {
-			if val, ok := res[thisEVMap["id"]]; ok {
+			if val, ok := res[thisEVMap["ID"]]; ok {
 				// the id exists. merge the map for this ev into the existing map
 				UpdateMap(val, thisEVMap)
 			} else {
 				// if not create a new key and
-				res[thisEVMap["id"]] = thisEVMap
+				res[thisEVMap["ID"]] = thisEVMap
 			}
 		}
 
@@ -197,8 +197,8 @@ func GetHosts(envVars map[string]string) map[string]map[string]string {
 // give a key and value: POSTGRES10_HOT_PICKLES_USERNAME=jdoe
 // return a map like:
 // {
-//	"id": "HOT_PICKLES",
-//	"client": "POSTGRES10",
+//	"ID": "HOT_PICKLES",
+//	"CLIENT": "POSTGRES10",
 //	"username": "jdoe",
 // }
 // The first part is always the client. The last part is the field. All the midde parts are the identity
@@ -211,7 +211,7 @@ func GetHostFromEV(key string, value string) (map[string]string, bool) {
 	if len(words) < 3 {
 		errMsg := fmt.Sprintf("too few fields in key to be a host setting: %s", key)
 		success = false
-		log.Error(errMsg)
+		log.Debug(errMsg)
 		return res, success
 	}
 
@@ -221,7 +221,7 @@ func GetHostFromEV(key string, value string) (map[string]string, bool) {
 	if !utility.Contains(SupportedClients, client) {
 		errMsg := fmt.Sprintf("prefix doesn't match a supported client: %s", client)
 		success = false
-		log.Error(errMsg)
+		log.Debug(errMsg)
 		return res, success
 	}
 
@@ -230,8 +230,8 @@ func GetHostFromEV(key string, value string) (map[string]string, bool) {
 
 	//Join the middle values together into an id that can contain separators
 	id := strings.Join(theMiddle, EVWordSeparator)
-	res["id"] = id
-	res["client"] = client
+	res["ID"] = id
+	res["CLIENT"] = client
 	res[fieldName] = value
 	return res, success
 }
@@ -253,14 +253,14 @@ func GetReachableHosts(hosts map[string]map[string]string) (map[string]map[strin
 
 	for _, hMap := range hosts {
 		var ok bool
-		hMap["address"], ok = ResolveHostName(hMap["address"])
+		hMap["ADDRESS"], ok = ResolveHostName(hMap["ADDRESS"])
 		if !ok {
 			success = false
 			continue
 		} else {
-			ok := CanConnect(hMap["address"], hMap["port"], ConnTimeoutMS)
+			ok := CanConnect(hMap["ADDRESS"], hMap["PORT"], ConnTimeoutMS)
 			if ok {
-				res[hMap["id"]] = hMap
+				res[hMap["ID"]] = hMap
 			} else {
 				success = false
 			}
