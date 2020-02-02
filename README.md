@@ -84,9 +84,11 @@ Verify tcp connectivity to a list of host/port environment variable paris specif
 
 
 ## TODO
-prereq cleanup runbook so we can get teh mokc preflight environment into devopsiac
+
 prereq: create mock-service project
 
+ Us my python example for getting the container endpoint:
+ https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
  
 1) create mock docker container with mock service
  - https://aws.amazon.com/amazon-linux-2/
@@ -94,6 +96,7 @@ prereq: create mock-service project
  - simple web app
  - verbose logging so we can tell when it's run
  - import version pinned preflight
+ - mock service will need concurrency before testing graceful shutdown
  
  
 2) database client example :
