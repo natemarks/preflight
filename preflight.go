@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/natemarks/preflight/config"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+)
+
+const (
+	version string = "v0.0.6"
 )
 
 func main() {
@@ -35,6 +40,7 @@ func RealMain() {
 		log.SetLevel(log.TraceLevel)
 		log.Debug("Verbose logging is enabled")
 	}
+	log.Info(fmt.Sprintf("preflight versionL %s", version))
 
 	config.LogContainerMetadata()
 
