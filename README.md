@@ -27,6 +27,7 @@ set -e
 preflight
 echo "YOU SHOULD NOT SEE ME IF preflight FAILS"
 /bath/to/service start
+preflight finalize # log task metadata just before closing the task
 ```
 
 preflight is intended to check all of the lifecycle stuff that devops has to configure to get a service to run.  It should help us fail fast and surface all of the container configuration problems at once.  
@@ -84,9 +85,13 @@ Verify tcp connectivity to a list of host/port environment variable paris specif
 
 
 ## TODO
-prereq cleanup runbook so we can get teh mokc preflight environment into devopsiac
+
 prereq: create mock-service project
 
+ Us my python example for getting the container endpoint:
+ https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html
+ 
+Add a preflight finalize subcommand.  seeentrypoint example
  
 1) create mock docker container with mock service
  - https://aws.amazon.com/amazon-linux-2/
@@ -94,6 +99,7 @@ prereq: create mock-service project
  - simple web app
  - verbose logging so we can tell when it's run
  - import version pinned preflight
+ - mock service will need concurrency before testing graceful shutdown
  
  
 2) database client example :
