@@ -40,7 +40,7 @@ func RealMain() {
 		log.SetLevel(log.TraceLevel)
 		log.Debug("Verbose logging is enabled")
 	}
-	log.Info(fmt.Sprintf("preflight versionL %s", version))
+	log.Info(fmt.Sprintf("preflight version: %s", version))
 
 	config.LogContainerMetadata()
 
