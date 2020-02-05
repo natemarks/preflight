@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,10 +12,13 @@ import (
 )
 
 const (
-	version string = "v0.0.9"
+	version            string = "v0.0.9"
+	liveness_flag_file string = "/tmp/preflight_alive"
 )
 
 func main() {
+	var liveCheck = flag.Bool("live_check", false, "check liveness file and exit")
+	flag.Parse()
 	formatter := &log.TextFormatter{
 		FullTimestamp: true,
 	}
@@ -26,10 +30,28 @@ func main() {
 	// I tried to move this to init() but it doesn't work there
 	log.SetOutput(os.Stdout)
 	config.GetSettings()
+	if *liveCheck {
+		_, err := os.Stat(liveness_flag_file)
+		if err != nil {
+			log.Fatal("Flag file not found")
+		} else {
+			os.Exit(0)
+		}
+	}
 	RealMain()
 }
 
+func touch_liveness_file() {
+	emptyFile, err := os.Create(liveness_flag_file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Info(fmt.Sprintf("Created liveness_check_file: %s", liveness_flag_file))
+	_ = emptyFile.Close()
+}
+
 func RealMain() {
+
 	// init success to true.  any failing check with set it to false
 	var success bool = true
 	verbose, err := strconv.ParseBool(viper.GetString("verbose"))
@@ -41,6 +63,7 @@ func RealMain() {
 		log.Debug("Verbose logging is enabled")
 	}
 	log.Info(fmt.Sprintf("preflight version: %s", version))
+	touch_liveness_file()
 
 	config.LogContainerMetadata()
 

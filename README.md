@@ -2,12 +2,39 @@
 
 preflight is run inside a docker container.  The container starts by running an entrypoint.sh script that looks like the one below. The preflight utility will run through every check and log the results to stdout which should be readily available to any docker logger.  If any of the checks failed, it exits with a non-zero exit code.  The entrypoint.sh script must run with 'set -e' in order to be sure it exits if preflight throws an error *BEFORE* starting the service. This should achieve the following goals:
  
+ - Creare a flag file for  kubernetes liveness probe. preflight always creates this file. running 'preflight -live_check' will lexit 0 if it finds the file and exit 1 if it doesn't as required by kubernetes (https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/). I expect this to work.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-exec
+spec:
+  containers:
+  - name: liveness
+    image: k8s.gcr.io/busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - 'preflight'
+        - '-live_check'
+      initialDelaySeconds: 5
+      periodSeconds: 5
+```
+ 
  - Log a complete list of all the the missing/failing environment variables and tag the logs for the audience that needs to resolve them ex: \[MyOrgName:DevOps\] 
  - Fail fast!  Don't waste time trying to start a service when we know the configuration is invalid
  - Reduce Noise: No useful logs come from a service that tries to start with an invalid config
  - Surface lifecycle information: Log information about the image and the attempted start time. This makes it easier to parse the logs to figure out when a service is flagging or stable. It can be clunky to parse the AWS task event logs to get this information from 'outside' of the container, for example
  - the preflight config file can be a contract/manifest between dev devops: ideally, the service engineering team is running preflight in their development containers from the beginning.  That probably helps dev, since they are their own devops in their local environments.  Then moving to shared deployments that are managed by dev, the preflight config is a part of the image, streamling the process for dev to provide all the right config for a new service
 
+
+Prefligh 
 
 example preflight config:
 ```yaml
