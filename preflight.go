@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	version            string = "v0.1.0"
+	version            string = "v0.1.1"
 	liveness_flag_file string = "/tmp/preflight_alive"
 )
 
